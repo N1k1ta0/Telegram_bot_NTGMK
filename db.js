@@ -1,13 +1,19 @@
-const {Sequelize} = require('sequelize');
+const { Sequelize } = require('sequelize')
+require('dotenv').config()
 
 module.exports = new Sequelize(
-    // 'postgres://grimksi:4QbYXDPrdy9k@ep-wispy-heart-761564.eu-central-1.aws.neon.tech/testdb?ssl=true',
-    'DB_ntgmk',
-    'postgres',
-    '1',
-    {
-        host:'localhost',
-        dialect: 'postgres',
-    }
+  process.env.DB_NAME,
+  process.env.DB_USER ?? 'postgres',
+  process.env.DB_PASSWORD ?? '',
+  {
+    host: process.env.DB_HOST ?? 'localhost',
+    port: process.env.DB_PORT ?? 5432,
+    dialect: 'postgres',
+    pool: {
+      min: 0,
+      max: 100,
+      idle: 200000,
+      acquire: 1000000,
+    },
+  }
 )
-1

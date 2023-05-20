@@ -1,112 +1,80 @@
-//api
 const TelegramApi = require('node-telegram-bot-api')
-//bd
-const sequelize = require('./db')
-const people = require('./models').people
-const { Op } = require('sequelize')
-function getChatId(msg) {
-    return msg.chat.id
- } 
+const db = require('./db')
+const { People } = require('./models/people')
+require('dotenv').config()
 
-const token = '6204465674:AAEz8RMRZG6F9zpr2Nv5tGEcz0AKw_7GXR0'
+const bot = new TelegramApi(process.env.BOT_TOKEN, { polling: true })
 
-const bot = new TelegramApi(token, {polling: true})
+const reqPhone = {
+  reply_markup: {
+    resize_keyboard: true,
+    keyboard: [
+      [
+        {
+          text: "Отправить мой номер",
+          request_contact: true,
+          remove_keyboard: true,
+        },
+        "Отмена"
+      ]
+    ]
+  }
+}
 
-bot.on('message', msg=>{
-    console.log(msg)
-})
+bot.on('polling_error', console.log)
+bot.on('message', data => console.log('message - ' + data.text))
 
 bot.onText(/\/start/, msg => {
-    
-    const reqPhone = {
-        reply_markup: {
-            
-            keyboard: [
-                [{
-                text: "Отправить мой номер",
-                request_contact: true,
-                remove_keyboard: true,
-                
-                }],
-                ["Отмена"]
-            ]
-        }
-    }  
-    
-    try{
-        sequelize.authenticate( 
-        sequelize.sync(),
-        console.log('db  in')
-        )
+  // console.log(msg)
 
-    } catch (e) { console.log('db  errors')}
-
-    function check_id(){
-        
-        const isIdUnique = chat_id =>
-            people.findOne({ where: { chat_id} , attributes: ['chat_id'] })
-            .then(token => token !== null)
-            .then(isUnique => isUnique);
-
-        // const isIdUniqueAccess = access_level =>
-        //     personalModel.findOne({ where: { [Op.and]: [{access_level},{chat_id:msg.chat.id}] } , attributes: ['chat_id'] })  
-        //     .then(isIdUniqueAccess => isIdUniqueAccess);
-        bot.sendMessage(getChatId(msg), 'ищу вас..')
-        isIdUnique(msg.chat.id).then(isUnique => {
-            if (isUnique) {
-                people.findOne({where:{chat_id:getChatId(msg)}, attributes: ['name']})
-                                .then(user=>{
-                                    bot.sendMessage(getChatId(msg), 'Вы можете начать работа23ть с ботом' + user.name)
-                                }).catch(err=>console.log(err));
-
-                // isIdUniqueAccess(1).then(isIdUniqueAccess => {
-                //     if (isIdUniqueAccess) {
-                //         bot.sendMessage(getChatId(msg), '1')
-                //     }
-                //     else{
-                //         bot.sendMessage(getChatId(msg), '!=1')
-                        
-                //     }
-                // })
-            }
-            else{
-                bot.sendMessage(getChatId(msg), 'Вас нет в списке, отправьте номер ', reqPhone)
-                
-                bot.once('contact', msg=>{
-                    const telUser = msg.contact.phone_number.replace('+','')
-                    
-                    function check_num(){
-    
-                        const isIdUnique = nomber =>
-                            people.findOne({ where: { nomber} , attributes: ['nomber'] })
-                            .then(token => token !== null)
-                            .then(isUnique => isUnique);
-                    
-                        isIdUnique(telUser).then(isUnique => {
-                            if (isUnique) {
-                                people.findOne({where:{nomber:telUser}, attributes: ['name']})
-                                .then(user=>{
-                                    bot.sendMessage(getChatId(msg), 'Вы можете начать работать с ботом' + user.name)
-                                }).catch(err=>console.log(err));
-                                
-                                sequelize.query("UPDATE people SET chat_id = $2 WHERE nomber = $1", {
-                                    bind:[telUser,msg.chat.id],
-                                    model: people,   
-                                    mapToModel: true,
-                                    type: Op.SELECT,
-                                })
-                                
-                            }
-                            else{
-                                bot.sendMessage(getChatId(msg), 'Вас нет в списке, обратьтесь к администратору')
-                            }
-                        })
-                    }
-                    check_num()                   
-                })
-            }
-        })
-    }
-    check_id()
+  db.authenticate().then(() => {
+    console.info('INFO - Database connected.')
+    check_id(msg)
+  }).catch(err => {
+    console.error('ERROR - Unable to connect to the database: ', err.message)
+  })
 })
 
+bot.once('contact', msg => {
+  const phone = msg.contact.phone_number.replace('+', '')
+  console.log(phone)
+  if (phone.length == 11) check_num(msg.chat.id, phone)
+})
+
+
+function check_id(msg) {
+  const chat_id = msg.chat.id
+  console.log('chat_id: ' + chat_id)
+
+  People.findOne({ where: { chat_id: chat_id } }).then(data => {
+    console.log(data)
+
+    if (data != null) {
+      bot.sendMessage(chat_id, 'Добро пожаловать, ' + data.name, reqPhone)
+      return
+    }
+
+    bot.sendMessage(chat_id, 'Вас нет в списке, отправьте номер ', reqPhone)
+  }).catch(console.error)
+}
+
+function check_num(chat_id, phone) {
+  People.findOne({ where: { phone: phone } }).then(isUnique => {
+    console.log(isUnique)
+
+    if (isUnique == null) {
+      bot.sendMessage(chat_id, 'Вас нет в списке, обратитесь к администратору')
+      return
+    }
+    
+    People.update({
+      chat_id: chat_id
+    }, {
+      where: { phone: phone }
+    }).then(i => {
+      console.log(i)
+    }).catch(error => {
+      console.error(error.message)
+    })
+  }).catch(console.error)
+}

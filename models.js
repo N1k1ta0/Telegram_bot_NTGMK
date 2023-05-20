@@ -1,25 +1,23 @@
+// import { define } from './db.js'
+// import { DataTypes } from 'sequelize'
 const sequelize = require('./db')
-const {DataTypes} = require('sequelize')
+const { DataTypes } = require('sequelize')
 
-
-const people = sequelize.define('people',
-{
-    name:{
-        type: DataTypes.CHAR(200),
-    },
-    
-    nomber:{
+const people = sequelize.define('people', {
+    id: {
         type: DataTypes.CHAR,
         primaryKey: true,
         autoIncrement: true,
         allowNull: false
     },
 
-    chat_id:{
-        type: DataTypes.BIGINT,
-        
+    name: {
+        type: DataTypes.CHAR(200),
     },
-}
-)
-module.exports.people = people;
+    
+    chat_id: {
+        type: DataTypes.BIGINT,
+    },
+})
 
+module.exports.people = people;
