@@ -5,8 +5,9 @@ const { CommonInformation } = require('./models/common_information')
 const { Rating } = require('./models/rating')
 const { Contracts } = require('./models/contracts')
 const { Orders } = require('./models/orders')
-const { Informations } = require('./models/informations')
+// const { Informations } = require('./models/informations')
 const { Schedule } = require('./models/schedules')
+const { RatingParsing } = require('./src/RatingParsing')
 require('dotenv').config()
 
 const bot = new TelegramApi(process.env.BOT_TOKEN, { polling: true })
@@ -129,7 +130,19 @@ bot.onText(/Расписание/, msg => {
   }).catch(console.error)
 })
 
-bot.onText(/Успеваемость/, msg => {
+bot.onText(/Успеваемость|\/ratings/, msg => {
+  let content = 'Успеваемость\n'
+
+  RatingParsing().then(rating => {
+    // console.log(rating)
+    rating.forEach(l => content += `
+${l[3]} курс ${l[4]} сем.
+${l[0]} ${l[2]}
+${l[3] ? l[3] : '-'}\n`)
+    bot.sendMessage(msg.chat.id, content, menuKeyboard)
+  })
+  return
+
   const options = {
     year: 'numeric',
     month: 'numeric',
@@ -231,43 +244,10 @@ bot.onText(/Приказы/, msg => {
 })
 
 bot.onText(/Заказ справок/, msg => {
-  let content = `Выберите и введите цифру, соответствующую способу получения справки:
-  \/1 - Заберу сам из колледжа
-  \/2 - Доставка по адресу
-  \/3 - Отправить по электронной почте`
+  let content = `Перейдите по ссылке, чтобы заказать справку:
+  http://ntgmk.ru/program/zapros.php`
 
   bot.sendMessage(msg.chat.id, content, menuKeyboard)
-})
-
-bot.onText(/\/[1-3]{1}/, msg => {
-  let content = 'Справка заказана и будет '
-  
-  switch (msg.text) {
-    case '/1':
-      content += 'доставлена в колледж'
-      break;
-  
-    case '/2':
-      content += 'доставлена по месту Вашей регистрации'
-      break;
-
-    case '/3':
-      content += 'отправлена на Вашу электронную почту'
-      break;
-        
-    default:
-      content = 'Ошибка, укажите один вариант из представленного списка'
-      break;
-  }
-
-  Informations.create({
-    send_type_id: msg.text.substring(1),
-    personId: 1,
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-  }).then(() => {
-    bot.sendMessage(msg.chat.id, content, menuKeyboard)
-  }).catch(console.error)
 })
 
 
@@ -276,7 +256,7 @@ function check_id(msg) {
   console.log('chat_id: ' + chat_id)
 
   People.findOne({ where: { chat_id: chat_id } }).then(data => {
-    console.log(data)
+    // console.log(data)
 
     if (data != null) {
       bot.sendMessage(chat_id, 'Добро пожаловать, ' + data.name, menuKeyboard)
@@ -288,10 +268,10 @@ function check_id(msg) {
 }
 
 function check_num(chat_id, phone) {
-  People.findOne({ where: { phone: phone } }).then(isUnique => {
-    console.log(isUnique)
+  People.findOne({ where: { phone: phone } }).then(data => {
+    // console.log(data)
 
-    if (isUnique == null) {
+    if (data == null) {
       bot.sendMessage(chat_id, 'Вас нет в списке, обратитесь к администратору')
       return
     }
@@ -302,7 +282,7 @@ function check_num(chat_id, phone) {
       where: { phone: phone }
     }).then(i => {
       console.log(i)
-      bot.sendMessage(chat_id, 'Добро пожаловать, ' + isUnique.name, menuKeyboard)
+      bot.sendMessage(chat_id, 'Добро пожаловать, ' + data.name, menuKeyboard)
     }).catch(error => {
       console.error(error.message)
     })

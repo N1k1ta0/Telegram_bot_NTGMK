@@ -27,6 +27,6 @@ const informations = sequelize.define('informations', {
   timestamps: true,
 })
 
-informations.sync({ alter: true })
+// informations.sync({ alter: true })
 
 module.exports.Informations = informations

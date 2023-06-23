@@ -38,6 +38,6 @@ const orders = sequelize.define('orders', {
   timestamps: true,
 })
 
-orders.sync({ alter: true })
+// orders.sync({ alter: true })
 
 module.exports.Orders = orders

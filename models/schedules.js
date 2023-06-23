@@ -36,6 +36,6 @@ const schedules = sequelize.define('schedules', {
   timestamps: true,
 })
 
-schedules.sync({ alter: true })
+// schedules.sync({ alter: true })
 
 module.exports.Schedule = schedules

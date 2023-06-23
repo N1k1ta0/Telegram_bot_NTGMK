@@ -37,6 +37,6 @@ people.hasMany(Orders)
 people.hasOne(Contracts)
 people.hasMany(Informations)
 
-people.sync({ alter: true })
+// people.sync({ alter: true })
 
 module.exports.People = people

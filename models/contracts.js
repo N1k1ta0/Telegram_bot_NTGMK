@@ -46,6 +46,6 @@ const contracts = sequelize.define('contracts', {
   timestamps: true,
 })
 
-contracts.sync({ alter: true })
+// contracts.sync({ alter: true })
 
 module.exports.Contracts = contracts

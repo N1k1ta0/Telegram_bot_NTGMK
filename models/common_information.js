@@ -29,6 +29,6 @@ const common_information = sequelize.define('common_information', {
   timestamps: true,
 })
 
-common_information.sync({ alter: true })
+// common_information.sync({ alter: true })
 
 module.exports.CommonInformation = common_information

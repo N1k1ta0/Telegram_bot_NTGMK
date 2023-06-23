@@ -35,6 +35,6 @@ const rating = sequelize.define('ratings', {
   timestamps: true,
 })
 
-rating.sync({ alter: true })
+// rating.sync({ alter: true })
 
 module.exports.Rating = rating
