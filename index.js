@@ -12,6 +12,17 @@ require('dotenv').config()
 
 const bot = new TelegramApi(process.env.BOT_TOKEN, { polling: true })
 
+const linkKeyboard = {
+  reply_markup: {
+    inline_keyboard: [
+      [{
+        text: "Перейти на сайт",
+        url: "http://ntgmk.ru/program/zapros.php",
+      }]
+    ]
+  }
+}
+
 const menuKeyboard = {
   reply_markup: {
     keyboard: [
@@ -25,6 +36,29 @@ const menuKeyboard = {
         "Приказы"
       ],
       ["Заказ справок"]
+    ]
+  }
+}
+
+const ratingKeyboard = {
+  reply_markup: {
+    keyboard: [
+      [
+        "1 курс 1 семестр",
+        "1 курс 2 семестр"
+      ],
+      [
+        "2 курс 1 семестр",
+        "2 курс 2 семестр"
+      ],
+      [
+        "3 курс 1 семестр",
+        "3 курс 2 семестр"
+      ],
+      [
+        "4 курс 1 семестр",
+        "4 курс 2 семестр"
+      ],
     ]
   }
 }
@@ -131,16 +165,7 @@ bot.onText(/Расписание/, msg => {
 })
 
 bot.onText(/Успеваемость|\/ratings/, msg => {
-  let content = 'Успеваемость\n'
-
-  RatingParsing().then(rating => {
-    // console.log(rating)
-    rating.forEach(l => content += `
-${l[3]} курс ${l[4]} сем.
-${l[0]} ${l[2]}
-${l[3] ? l[3] : '-'}\n`)
-    bot.sendMessage(msg.chat.id, content, menuKeyboard)
-  })
+  bot.sendMessage(msg.chat.id, 'Выберите курс и семестр', ratingKeyboard)
   return
 
   const options = {
@@ -174,6 +199,20 @@ ${l[3] ? l[3] : '-'}\n`)
   
     bot.sendMessage(msg.chat.id, content, menuKeyboard)
   }).catch(console.error)
+})
+
+bot.onText(/([1-4]{1}) курс ([1-2]{1}) семестр/, (msg, match) => {
+  console.log(match)
+  let content = `${match[0]}семестр\n\n`
+
+  RatingParsing().then(rating => {
+    rating.forEach(r => {
+      if (match[1] == r[3] && match[2] == r[4]) {
+        content += `${r[0]} ${r[2]}\n${r[5] ? r[5] : '-'}\n\n`
+      }
+    })
+    bot.sendMessage(msg.chat.id, content, menuKeyboard)
+  })
 })
 
 bot.onText(/Договоры/, msg => {
@@ -244,10 +283,9 @@ bot.onText(/Приказы/, msg => {
 })
 
 bot.onText(/Заказ справок/, msg => {
-  let content = `Перейдите по ссылке, чтобы заказать справку:
-  http://ntgmk.ru/program/zapros.php`
+  let content = `Перейдите по ссылке, чтобы заказать справку`
 
-  bot.sendMessage(msg.chat.id, content, menuKeyboard)
+  bot.sendMessage(msg.chat.id, content, linkKeyboard)
 })
 
 

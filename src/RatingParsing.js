@@ -18,17 +18,19 @@ module.exports.RatingParsing = async() => {
   const ratings = Array()
 
   return response.text().then(d => {
-    console.log(d)
+    // console.log(d)
     const table = d.match(/Успеваемость по дисциплинам<\/td><\/tr>\r\n.*<\/TABLE>/gms)
-    const values = Array.from(table[0].matchAll(/<td class=.{5,6}>([А-я .0-9]{0,100})<\/font>/gms))
+    const values = Array.from(table[0].matchAll(
+      /<td[ ]+class=.{5,6}>([А-яA-z .\-0-9]{0,100})<\/font>/gms
+    ))
     let part = Array()
     let counter = 1
 
     values.forEach(element => {
       part.push(element[1])
 
-      if (ratings.length == 60) return
-      if (counter++ > 4) {
+      // if (ratings.length == 60) return
+      if (counter++ > 15) {
         // console.log(part)
         // console.log(JSON.stringify(part))
         ratings.push(part)
